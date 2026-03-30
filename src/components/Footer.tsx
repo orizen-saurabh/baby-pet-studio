@@ -5,7 +5,7 @@ import { motion, useInView } from "framer-motion";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
-const NAV_LINKS = ["Home", "Services", "Testimonials", "Contact"];
+const NAV_LINKS = ["Home", "Services", "Testimonials"];
 
 // ─── Social Icons ─────────────────────────────────────────────────────────────
 
@@ -152,6 +152,7 @@ export default function Footer() {
 
   return (
     <footer
+      id="contact"
       ref={ref}
       style={{
         background: "#f3aaad",

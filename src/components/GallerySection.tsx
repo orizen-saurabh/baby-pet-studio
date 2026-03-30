@@ -13,6 +13,12 @@ const IMAGES = [
   { src: "/shop4.jpg", alt: "Baby Pet Studio — shop view 4" },
 ];
 
+const STATS = [
+  { value: "4.5★", label: "Google Rating" },
+  { value: "84+", label: "Happy Reviews" },
+  { value: "5+", label: "Years Open" },
+];
+
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
 
 function Lightbox({
@@ -26,7 +32,6 @@ function Lightbox({
   onPrev: () => void;
   onNext: () => void;
 }) {
-  // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -37,7 +42,6 @@ function Lightbox({
     return () => window.removeEventListener("keydown", handler);
   }, [onClose, onPrev, onNext]);
 
-  // Lock body scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -53,14 +57,11 @@ function Lightbox({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.22 }}
     >
-      {/* Backdrop */}
       <motion.div
         className="absolute inset-0 bg-black/85"
         style={{ backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}
         onClick={onClose}
       />
-
-      {/* Image container */}
       <motion.div
         key={index}
         className="relative z-10 max-w-4xl w-full mx-6"
@@ -79,14 +80,11 @@ function Lightbox({
             priority
           />
         </div>
-
-        {/* Counter */}
         <div className="text-center mt-4 text-sm text-white/50">
           {index + 1} / {IMAGES.length}
         </div>
       </motion.div>
 
-      {/* Close button */}
       <button
         onClick={onClose}
         className="absolute top-5 right-5 z-20 w-10 h-10 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
@@ -97,8 +95,6 @@ function Lightbox({
           <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </button>
-
-      {/* Prev button */}
       <button
         onClick={(e) => { e.stopPropagation(); onPrev(); }}
         disabled={index === 0}
@@ -110,8 +106,6 @@ function Lightbox({
           <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
-
-      {/* Next button */}
       <button
         onClick={(e) => { e.stopPropagation(); onNext(); }}
         disabled={index === IMAGES.length - 1}
@@ -127,56 +121,69 @@ function Lightbox({
   );
 }
 
-// ─── Thumbnail ────────────────────────────────────────────────────────────────
+// ─── Studio Carousel ──────────────────────────────────────────────────────────
 
-function Thumbnail({
-  image,
-  index,
-  inView,
-  onClick,
-}: {
-  image: (typeof IMAGES)[0];
-  index: number;
-  inView: boolean;
-  onClick: () => void;
-}) {
+function StudioCarousel({ onOpenLightbox }: { onOpenLightbox: (i: number) => void }) {
+  const [current, setCurrent] = useState(0);
+
+  // Auto-advance
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent((c) => (c + 1) % IMAGES.length);
+    }, 3800);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <motion.button
-      onClick={onClick}
-      className="group relative overflow-hidden rounded-2xl aspect-square w-full focus:outline-none"
-      initial={{ opacity: 0, y: 24 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{
-        duration: 0.45,
-        delay: (index % 4) * 0.07,
-        ease: [0.25, 0.46, 0.45, 0.94],
-      }}
-      whileHover={{ scale: 1.02 }}
-      style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.07)" }}
-    >
-      {/* Image */}
-      <Image
-        src={image.src}
-        alt={image.alt}
-        fill
-        className="object-cover transition-transform duration-500 group-hover:scale-105"
-        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-      />
+    <div className="relative w-full">
+      {/* Image frame */}
+      <div
+        className="relative w-full overflow-hidden rounded-2xl cursor-pointer"
+        style={{ aspectRatio: "4/3" }}
+        onClick={() => onOpenLightbox(current)}
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={current}
+            className="absolute inset-0"
+            initial={{ opacity: 0, scale: 1.04 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.97 }}
+            transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            <Image
+              src={IMAGES[current].src}
+              alt={IMAGES[current].alt}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              priority={current === 0}
+            />
+          </motion.div>
+        </AnimatePresence>
 
-      {/* Hover overlay */}
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-all duration-300 flex items-center justify-center">
-        <motion.div
-          className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-          initial={{ scale: 0.8 }}
-          whileHover={{ scale: 1 }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111111" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.35-4.35M11 8v6M8 11h6" />
+        {/* Expand hint */}
+        <div className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
           </svg>
-        </motion.div>
+        </div>
       </div>
-    </motion.button>
+
+      {/* Dot navigation */}
+      <div className="flex items-center justify-center gap-2 mt-4">
+        {IMAGES.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            className={`rounded-full transition-all duration-300 ${
+              i === current ? "w-6 h-1.5 bg-[#111111]" : "w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400"
+            }`}
+            aria-label={`Go to image ${i + 1}`}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -187,44 +194,74 @@ export default function GallerySection() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
 
-  const open = (i: number) => setLightboxIndex(i);
   const close = useCallback(() => setLightboxIndex(null), []);
   const prev = useCallback(() => setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : i)), []);
   const next = useCallback(() => setLightboxIndex((i) => (i !== null && i < IMAGES.length - 1 ? i + 1 : i)), []);
 
   return (
-    <section id="gallery" ref={ref} className="bg-white pb-24 pt-14 px-6">
+    <section id="about" ref={ref} className="bg-[#FAFAFA] py-24 px-6">
       <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
 
-        {/* Heading */}
-        <motion.div
-          className="text-center mb-14"
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <p className="text-xs font-semibold tracking-widest uppercase text-[#6B7280] mb-2">
-            Our Studio
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-semibold text-[#111111] tracking-tight mb-3">
-            A peek inside
-          </h2>
-          <p className="text-[#6B7280] text-base max-w-sm mx-auto">
-            A warm, safe space where every pet is treated like family.
-          </p>
-        </motion.div>
+          {/* ── Column 1: About Us ── */}
+          <motion.div
+            initial={{ opacity: 0, x: -28 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            <p className="text-xs font-semibold tracking-widest uppercase text-[#6B7280] mb-3">
+              About Us
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-semibold text-[#111111] tracking-tight mb-6 leading-tight">
+              Where every pet<br />feels at home
+            </h2>
 
-        {/* Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {IMAGES.map((image, i) => (
-            <Thumbnail
-              key={image.src}
-              image={image}
-              index={i}
-              inView={inView}
-              onClick={() => open(i)}
-            />
-          ))}
+            <div className="space-y-4 text-[#4B5563] text-base leading-relaxed">
+              <p>
+                Nestled in the heart of Waterloo, Baby Pet Studio is a professional grooming salon
+                and retail boutique built around one simple belief — your pet deserves to be
+                treated like family.
+              </p>
+              <p>
+                Our experienced groomers take the time to understand each pet&apos;s personality,
+                coat needs, and any anxieties before every session. Whether it&apos;s a relaxing
+                spa bath, a precision haircut, or a full groom, we make sure every visit is calm,
+                comfortable, and fun.
+              </p>
+              <p>
+                We also stock a curated range of premium treats, raw food, and pet accessories
+                in our in-store boutique — because great care extends beyond the grooming table.
+              </p>
+            </div>
+
+            {/* Stats */}
+            <div className="flex gap-8 mt-10">
+              {STATS.map((stat, i) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={inView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.45, delay: 0.2 + i * 0.08, ease: "easeOut" }}
+                >
+                  <p className="text-2xl font-semibold text-[#111111]">{stat.value}</p>
+                  <p className="text-sm text-[#6B7280] mt-0.5">{stat.label}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* ── Column 2: Our Studio Carousel ── */}
+          <motion.div
+            initial={{ opacity: 0, x: 28 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.55, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            <p className="text-xs font-semibold tracking-widest uppercase text-[#6B7280] mb-3">
+              Our Studio
+            </p>
+            <StudioCarousel onOpenLightbox={setLightboxIndex} />
+          </motion.div>
+
         </div>
       </div>
 
