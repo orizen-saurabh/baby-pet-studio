@@ -15,7 +15,7 @@ const IMAGES = [
 
 const STATS = [
   { value: "4.5★", label: "Google Rating" },
-  { value: "84+", label: "Happy Reviews" },
+  { value: "80+", label: "Happy Reviews" },
   { value: "5+", label: "Years Open" },
 ];
 
